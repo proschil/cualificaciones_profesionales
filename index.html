@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cualificaciones Profesionales Canarias 2025</title>
+    <style>
+        :root {
+            --color-verde: #2E8B57;
+            --color-azul: #4682B4;
+            --color-naranja: #FF8C42;
+            --color-borde: #e0e0e0;
+            --color-fondo: #f5f5f5;
+            --color-header: #f0f0f0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background-color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+        }
+        
+        .selector-container {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: var(--color-fondo);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .selector-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        #familia-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: white;
+        }
+        
+        .resultados {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        thead {
+            background-color: var(--color-header);
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid var(--color-borde);
+        }
+        
+        th {
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        th.col-codigo, th.col-nombre, th.col-nivel, th.col-prevision {
+            color: var(--color-verde);
+        }
+        
+        th.col-certificado {
+            color: var(--color-azul);
+        }
+        
+        th.col-ciclo {
+            color: var(--color-naranja);
+        }
+        
+        td.col-codigo, td.col-nivel, td.col-prevision {
+            text-align: center;
+        }
+        
+        td.col-nombre, td.col-certificado, td.col-ciclo {
+            text-align: left; /* Alineación izquierda como solicitado */
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cualificaciones Profesionales Canarias 2025</h1>
+        
+        <div class="selector-container">
+            <label for="familia-select" class="selector-label">Seleccione una familia profesional:</label>
+            <select id="familia-select">
+                <option value="">-- Seleccione una familia profesional --</option>
+                <!-- Las opciones se cargarán dinámicamente desde el JS -->
+            </select>
+        </div>
+        
+        <div class="resultados">
+            <table id="tabla-cualificaciones">
+                <thead>
+                    <tr>
+                        <th class="col-codigo">Código cualificación</th>
+                        <th class="col-nombre">Nombre cualificación</th>
+                        <th class="col-nivel">Nivel</th>
+                        <th class="col-prevision">Previsión 2025</th>
+                        <th class="col-certificado">Certificado profesional asociado</th>
+                        <th class="col-ciclo">Ciclo formativo - Grado D</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-body">
+                    <tr>
+                        <td colspan="6" class="no-data">Seleccione una familia profesional para ver las cualificaciones</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Carga los datos desde el CSV
+        let datos = [];
+        
+        // Función para cargar el CSV
+        function cargarCSV() {
+            fetch('QP.csv')
+                .then(response => response.text())
+                .then(text => {
+                    // Procesar el CSV
+                    const lines = text.split('\n');
+                    if (lines.length <= 1) return;
+                    
+                    const headers = lines[0].split(';'); // Asume que el CSV usa ; como separador
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        if (!lines[i].trim()) continue; // Salta líneas vacías
+                        
+                        const valores = lines[i].split(';');
+                        if (valores.length !== headers.length) continue;
+                        
+                        const obj = {};
+                        for (let j = 0; j < headers.length; j++) {
+                            obj[headers[j].trim()] = valores[j].trim();
+                        }
+                        datos.push(obj);
+                    }
+                    
+                    // Una vez cargados los datos, inicializar la interfaz
+                    cargarFamilias();
+                })
+                .catch(error => {
+                    console.error('Error al cargar el CSV:', error);
+                    // Cargar datos de ejemplo si falla la carga del CSV
+                    cargarDatosEjemplo();
+                });
+        }
+        
+        // Carga datos de ejemplo en caso de error con el CSV
+        function cargarDatosEjemplo() {
+            datos = [
+                {
+                    "Familia profesional": "Química",
+                    "Código cualificación": "QUI021_2",
+                    "Nombre cualificación": "Ensayos microbiológicos y biotecnológicos",
+                    "Nivel": "2",
+                    "Previsión 2025": "Sí",
+                    "Certificado profesional asociado": "QUIA0208 - Ensayos microbiológicos y biotecnológicos",
+                    "Ciclo formativo - Grado D": "No disponible"
+                },
+                {
+                    "Familia profesional": "Química",
+                    "Código cualificación": "QUI117_3",
+                    "Nombre cualificación": "Análisis químico",
+                    "Nivel": "3",
+                    "Previsión 2025": "Sí",
+                    "Certificado profesional asociado": "QUIL0108 - Análisis químico",
+                    "Ciclo formativo - Grado D": "Técnico Superior en Laboratorio de Análisis y Control de Calidad"
+                },
+                {
+                    "Familia profesional": "Química",
+                    "Código cualificación": "QUI475_3",
+                    "Nombre cualificación": "Control de calidad en la industria química",
+                    "Nivel": "3",
+                    "Previsión 2025": "Sí",
+                    "Certificado profesional asociado": "QUIO0109 - Control de calidad en la industria química",
+                    "Ciclo formativo - Grado D": "Técnico Superior en Química Industrial"
+                },
+                {
+                    "Familia profesional": "Informática y Comunicaciones",
+                    "Código cualificación": "IFC154_2",
+                    "Nombre cualificación": "Reparación de equipos microinformáticos",
+                    "Nivel": "2",
+                    "Previsión 2025": "Sí",
+                    "Certificado profesional asociado": "IFCT0309 - Montaje y reparación de equipos microinformáticos",
+                    "Ciclo formativo - Grado D": "Técnico en Sistemas Microinformáticos y Redes"
+                },
+                {
+                    "Familia profesional": "Informática y Comunicaciones",
+                    "Código cualificación": "IFC303_3",
+                    "Nombre cualificación": "Programación de sistemas informáticos",
+                    "Nivel": "3",
+                    "Previsión 2025": "Sí",
+                    "Certificado profesional asociado": "IFCT0609 - Programación de sistemas informáticos",
+                    "Ciclo formativo - Grado D": "Técnico Superior en Desarrollo de Aplicaciones Multiplataforma"
+                },
+                {
+                    "Familia profesional": "Hostelería y Turismo",
+                    "Código cualificación": "HOT093_2",
+                    "Nombre cualificación": "Cocina",
+                    "Nivel": "2",
+                    "Previsión 2025": "Sí",
+                    "Certificado profesional asociado": "HOTR0408 - Cocina",
+                    "Ciclo formativo - Grado D": "Técnico en Cocina y Gastronomía"
+                }
+            ];
+            
+            cargarFamilias();
+        }
+
+        // Función para cargar las familias profesionales en el desplegable
+        function cargarFamilias() {
+            const selectFamilia = document.getElementById('familia-select');
+            const familias = [...new Set(datos.map(item => item["Familia profesional"]))].sort();
+            
+            familias.forEach(familia => {
+                const option = document.createElement('option');
+                option.value = familia;
+                option.textContent = familia;
+                selectFamilia.appendChild(option);
+            });
+        }
+
+        // Función para filtrar y mostrar cualificaciones según la familia seleccionada
+        function mostrarCualificaciones(familia) {
+            const tablaBody = document.getElementById('tabla-body');
+            tablaBody.innerHTML = '';
+
+            if (!familia) {
+                tablaBody.innerHTML = '<tr><td colspan="6" class="no-data">Seleccione una familia profesional para ver las cualificaciones</td></tr>';
+                return;
+            }
+
+            const cualificaciones = datos.filter(item => item["Familia profesional"] === familia);
+
+            if (cualificaciones.length === 0) {
+                tablaBody.innerHTML = '<tr><td colspan="6" class="no-data">No hay cualificaciones disponibles para esta familia profesional</td></tr>';
+                return;
+            }
+
+            cualificaciones.forEach(cual => {
+                const row = document.createElement('tr');
+                
+                // Código cualificación (centrado)
+                const colCodigo = document.createElement('td');
+                colCodigo.textContent = cual["Código cualificación"];
+                colCodigo.className = 'col-codigo';
+                row.appendChild(colCodigo);
+                
+                // Nombre cualificación (alineación izquierda)
+                const colNombre = document.createElement('td');
+                colNombre.textContent = cual["Nombre cualificación"];
+                colNombre.className = 'col-nombre';
+                row.appendChild(colNombre);
+                
+                // Nivel (centrado)
+                const colNivel = document.createElement('td');
+                colNivel.textContent = cual["Nivel"];
+                colNivel.className = 'col-nivel';
+                row.appendChild(colNivel);
+                
+                // Previsión 2025 (centrado)
+                const colPrevision = document.createElement('td');
+                colPrevision.textContent = cual["Previsión 2025"];
+                colPrevision.className = 'col-prevision';
+                row.appendChild(colPrevision);
+                
+                // Certificado profesional asociado (alineación izquierda)
+                const colCertificado = document.createElement('td');
+                colCertificado.textContent = cual["Certificado profesional asociado"];
+                colCertificado.className = 'col-certificado';
+                row.appendChild(colCertificado);
+                
+                // Ciclo formativo - Grado D (alineación izquierda)
+                const colCiclo = document.createElement('td');
+                colCiclo.textContent = cual["Ciclo formativo - Grado D"];
+                colCiclo.className = 'col-ciclo';
+                row.appendChild(colCiclo);
+                
+                tablaBody.appendChild(row);
+            });
+        }
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarCSV();
+            
+            // Evento de cambio en el selector de familia
+            document.getElementById('familia-select').addEventListener('change', (e) => {
+                mostrarCualificaciones(e.target.value);
+            });
+        });
+    </script>
+</body>
+</html>
